@@ -1,0 +1,43 @@
+version: 2.1
+
+jobs:
+  # Exercise: Infrastructure Creation
+  create_infrastructure: 
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Create Cloudformation Stack
+          command: |
+            aws cloudformation deploy \
+              --template-file cloud_formation_template.yml \
+              --stack-name myStack-${CIRCLE_WORKFLOW_ID:0:5} \
+              --region us-east-1
+
+  # Exercise: Config and Deployment
+  configure_infrastructure: 
+    docker:
+      - image: python:3.7-alpine3.11
+    steps:
+      - checkout
+      - add_ssh_keys:
+              # You can get this ID in the section where you registered the SSH Key
+              fingerprints: ["6a:18:c4:23:e0:b8:a6:b4:40:cc:a9:42:b0:3e:63:80"] 
+      - run:
+          name: Install Ansible
+          command: |
+            apk add --update ansible  # Install the dependencies
+      - run:
+          name: Run Playbook and Configure server
+          command: |
+            # ansible-playbook -i [inventory-file] [playbook-file]
+            ansible-playbook -i inventory main-ansible.yml
+
+workflows:
+  build-workflow:
+    jobs:
+      - create_infrastructure
+      - configure_infrastructure:
+          requires:
+            - create_infrastructure
