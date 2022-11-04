@@ -1,0 +1,40 @@
+---
+- name: Update apt packages
+  become: yes
+  apt:
+    update_cache: yes
+
+- name: Upgrade packages
+  become: yes
+  apt:
+    upgrade: yes
+
+- name: Install dependencies
+  become: yes
+  apt:
+    name: ["nodejs", "npm"]
+    state: latest
+    update_cache: yes
+
+- name: Install npm pm2 module
+  become: yes
+  npm:
+    name: pm2
+    global: yes
+    state: latest
+    production: yes
+
+- name: Create ~/web directory
+  ansible.builtin.file:
+    path: ~/web
+    state: directory
+    mode: 0755
+
+- name: Copy file with owner and permissions
+  ansible.builtin.copy:
+    src: index.js
+    dest: ~/web/index.js
+
+- name: Start the pm2 web server
+  ansible.builtin.command: pm2 start ~/web/index.js -f
+
